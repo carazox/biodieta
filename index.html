@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#10b981">
+<title>Lista de la compra · Biodieta</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --panel-2: #f0f2f5;
+    --text: #1c1f23;
+    --text-soft: #6b7280;
+    --border: #e5e7eb;
+    --accent: #10b981;
+    --accent-soft: #d1fae5;
+    --danger: #ef4444;
+    --warn: #f59e0b;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
+    --radius: 14px;
+    --radius-sm: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1115;
+      --panel: #181b21;
+      --panel-2: #21252c;
+      --text: #e6e8eb;
+      --text-soft: #9aa0a6;
+      --border: #2a2f37;
+      --accent: #10b981;
+      --accent-soft: #064e3b;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+    font-size: 16px; line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 920px; margin: 0 auto; padding: 16px; padding-bottom: 96px; }
+
+  /* === HEADER STICKY === */
+  header.app {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--bg);
+    padding: 12px 16px 8px;
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    background: color-mix(in srgb, var(--bg) 85%, transparent);
+  }
+  .header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 920px; margin: 0 auto; }
+  h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
+  h1 .sub { color: var(--text-soft); font-weight: 400; font-size: 14px; margin-left: 4px; }
+
+  .resumen { display: flex; gap: 12px; align-items: center; max-width: 920px; margin: 8px auto 0; flex-wrap: wrap; }
+  .badge { padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 500;
+    background: var(--panel-2); color: var(--text-soft); white-space: nowrap; }
+  .badge.ok { background: var(--accent-soft); color: var(--accent); }
+  .badge.pend { background: rgba(245, 158, 11, .15); color: var(--warn); }
+  .progreso { flex: 1; min-width: 120px; height: 6px; border-radius: 999px; background: var(--panel-2); overflow: hidden; }
+  .progreso > div { height: 100%; background: var(--accent); border-radius: 999px; transition: width .3s; }
+
+  /* === FILTROS === */
+  .filtros { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px; margin: 16px 0; box-shadow: var(--shadow); }
+  .filtros[disabled] { opacity: .55; pointer-events: none; }
+  .filtros[disabled]::after {
+    content: "🔒 Filtros bloqueados";
+    position: absolute; right: 28px; padding: 4px 10px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 600;
+    pointer-events: none; transform: translateY(-8px);
+  }
+  .filtros { position: relative; }
+  .grupo { margin-bottom: 14px; }
+  .grupo:last-child { margin-bottom: 0; }
+  .grupo-label { font-size: 13px; font-weight: 600; color: var(--text-soft); text-transform: uppercase;
+    letter-spacing: .04em; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .grupo-acciones { display: flex; gap: 6px; }
+  .mini { font-size: 12px; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--text-soft); cursor: pointer; }
+  .mini:hover { background: var(--panel-2); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel);
+    color: var(--text); font-size: 14px; cursor: pointer; transition: all .15s; user-select: none;
+    min-height: 36px; display: inline-flex; align-items: center;
+  }
+  .chip:hover { background: var(--panel-2); }
+  .chip.activo { background: var(--accent); color: white; border-color: var(--accent); }
+  .chip.activo:hover { background: var(--accent); filter: brightness(1.05); }
+
+  .switch { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+  .switch input { position: absolute; opacity: 0; pointer-events: none; }
+  .switch-pista { width: 44px; height: 26px; border-radius: 999px; background: var(--panel-2); position: relative;
+    border: 1px solid var(--border); transition: all .2s; flex-shrink: 0; }
+  .switch-pista::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;
+    border-radius: 50%; background: white; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: all .2s; }
+  .switch input:checked + .switch-pista { background: var(--accent); border-color: var(--accent); }
+  .switch input:checked + .switch-pista::after { transform: translateX(18px); }
+
+  /* === LISTA === */
+  .seccion { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    margin-bottom: 12px; overflow: hidden; box-shadow: var(--shadow); }
+  .seccion-titulo { display: flex; align-items: center; gap: 10px; padding: 14px 16px;
+    border-bottom: 1px solid var(--border); font-weight: 600; font-size: 16px; background: var(--panel-2); }
+  .seccion-titulo .contador { margin-left: auto; font-size: 13px; color: var(--text-soft); font-weight: 500; }
+  .seccion-titulo .emoji { font-size: 22px; }
+  ul.items { list-style: none; margin: 0; padding: 0; }
+  ul.items li { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border);
+    gap: 12px; transition: background .15s; }
+  ul.items li:last-child { border-bottom: none; }
+  ul.items li:hover { background: var(--panel-2); }
+  .item-info { flex: 1; min-width: 0; }
+  .item-nombre { font-size: 15px; font-weight: 500; }
+  .item-cantidad { font-size: 13px; color: var(--text-soft); margin-top: 2px; }
+  li.comprado .item-info { text-decoration: line-through; color: var(--text-soft); opacity: .55; }
+  .btn-cart { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border);
+    background: var(--panel); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; transition: all .15s; flex-shrink: 0; }
+  .btn-cart:hover { background: var(--panel-2); }
+  .btn-cart.marcado { background: var(--accent); border-color: var(--accent); color: white; }
+
+  .vacio { text-align: center; padding: 60px 20px; color: var(--text-soft); }
+  .vacio .emoji { font-size: 64px; margin-bottom: 12px; }
+
+  /* === FAB CANDADO === */
+  .fab-grupo { position: fixed; bottom: 24px; right: 24px; z-index: 60; display: flex; flex-direction: column; gap: 10px; }
+  .fab { width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
+    background: var(--panel); color: var(--text); box-shadow: 0 4px 16px rgba(0,0,0,.2);
+    font-size: 22px; display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+  }
+  .fab:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+  .fab.bloqueado { background: var(--accent); color: white; }
+  .fab.reset { width: 44px; height: 44px; font-size: 16px; opacity: .8; }
+  @media (max-width: 480px) {
+    .fab { width: 52px; height: 52px; font-size: 20px; }
+    .fab-grupo { bottom: 16px; right: 16px; }
+  }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 600px) {
+    .container { padding: 12px; }
+    h1 { font-size: 16px; }
+    h1 .sub { display: none; }
+    .filtros { padding: 14px; }
+    .seccion-titulo { padding: 12px 14px; }
+    ul.items li { padding: 10px 14px; }
+  }
+</style>
+</head>
+<body>
+  <header class="app">
+    <div class="header-row">
+      <h1>🛒 Lista de la compra <span class="sub">· Biodieta</span></h1>
+      <div style="font-size: 13px; color: var(--text-soft);" id="meta-info"></div>
+    </div>
+    <div class="resumen">
+      <span class="badge">Total: <strong id="total">0</strong></span>
+      <span class="badge ok">Comprados: <strong id="comprados">0</strong></span>
+      <span class="badge pend">Pendientes: <strong id="pendientes">0</strong></span>
+      <div class="progreso"><div id="barra" style="width: 0%"></div></div>
+    </div>
+  </header>
+
+  <div class="container">
+    <section class="filtros" id="filtros">
+      <div class="grupo">
+        <div class="grupo-label">
+          Días de la semana
+          <div class="grupo-acciones">
+            <button class="mini" data-action="all-dias">Todos</button>
+            <button class="mini" data-action="none-dias">Ninguno</button>
+          </div>
+        </div>
+        <div class="chips" id="chips-dias"></div>
+      </div>
+      <div class="grupo">
+        <div class="grupo-label">
+          Tomas
+          <div class="grupo-acciones">
+            <button class="mini" data-action="all-tomas">Todas</button>
+            <button class="mini" data-action="none-tomas">Ninguna</button>
+          </div>
+        </div>
+        <div class="chips" id="chips-tomas"></div>
+      </div>
+      <div class="grupo" style="display: flex; align-items: center; justify-content: space-between;">
+        <div class="grupo-label" style="margin: 0;">Vista</div>
+        <label class="switch">
+          <span style="font-size: 14px;">Agrupar por sección del súper</span>
+          <input type="checkbox" id="agrupar" checked>
+          <span class="switch-pista"></span>
+        </label>
+      </div>
+    </section>
+
+    <section id="lista"></section>
+  </div>
+
+  <div class="fab-grupo">
+    <button class="fab reset" id="reset" title="Limpiar marcas de comprado">🔄</button>
+    <button class="fab" id="lock" title="Bloquear filtros">🔓</button>
+  </div>
+
+<script>
+const DB = {"meta": {"revision_actual": 62, "fecha_revision": "2026-05-08", "dietista": "Iván Martín-Delgado Cerdeño", "paciente": "Jorge Carazo Chico", "nota_estructura": "tomas_fijas se reutilizan entre revisiones (desayuno, pre_mediamañana, mediamañana, pre_merienda, merienda). Solo cambian almuerzo y cena, dentro de revisiones.XX. Los platos del menú marcados con '1R' que tienen ficha aparecen en 'recetas' y deben expandirse al generar la compra; los demás son ingredientes literales (tipo: simple).", "historial_normalizaciones": ["Resuelto 2026-05-15 por Jorge: sandwich_pavo y medio_sandwich_jamon_serrano definidos con sus ingredientes; aguacate del desayuno 80 g; queso de cabra del viernes 30 g.", "Normalizaciones aplicadas: 'zumo_naranja' eliminado y sustituido por 'naranja, 2 ud, para zumo'; 'pollo_filete' unificado a 'pollo_pechuga'; 'pavo_filete' unificado a 'pavo_pechuga'; huevo en recetas migrado de gramos a unidades.", "Normalización 2026-05-15: ID 'yogurt_natural' renombrado a 'yogur_natural' por coherencia con 'yogur_desnatado' (grafía correcta en español, sin t).", "Renombre 2026-05-15: sección 'dudas_pendientes' renombrada a 'historial_normalizaciones' (todas las dudas estaban ya resueltas, era un historial de cambios)."]}, "tomas_fijas": {"desayuno": {"lunes": [{"alimento": "leche_sin_lactosa", "cantidad": 250, "unidad": "ml"}, {"alimento": "cacao_sin_azucar", "cantidad": 5, "unidad": "g"}, {"alimento": "copos_de_avena", "cantidad": 30, "unidad": "g"}, {"alimento": "platano", "cantidad": 160, "unidad": "g"}], "martes": [{"alimento": "leche_sin_lactosa", "cantidad": 250, "unidad": "ml"}, {"alimento": "cacao_sin_azucar", "cantidad": 5, "unidad": "g"}, {"alimento": "pan_de_centeno", "cantidad": 2, "unidad": "tostada"}, {"alimento": "aguacate", "cantidad": 80, "unidad": "g", "notas": "medio aguacate grande / uno pequeño, para untar las 2 tostas"}, {"alimento": "huevo", "cantidad": 1, "unidad": "ud"}], "miercoles": [{"alimento": "leche_sin_lactosa", "cantidad": 250, "unidad": "ml"}, {"alimento": "cacao_sin_azucar", "cantidad": 5, "unidad": "g"}, {"alimento": "copos_de_avena", "cantidad": 30, "unidad": "g"}, {"alimento": "platano", "cantidad": 160, "unidad": "g"}], "jueves": [{"alimento": "leche_sin_lactosa", "cantidad": 250, "unidad": "ml"}, {"alimento": "copos_de_avena", "cantidad": 30, "unidad": "g"}, {"alimento": "pan_de_centeno", "cantidad": 2, "unidad": "tostada"}, {"alimento": "aceite_oliva_virgen", "cantidad": 10, "unidad": "g"}, {"alimento": "atun_lata", "cantidad": 40, "unidad": "g"}, {"alimento": "naranja", "cantidad": 2, "unidad": "ud", "notas": "para zumo"}], "viernes": [{"alimento": "leche_sin_lactosa", "cantidad": 250, "unidad": "ml"}, {"alimento": "cacao_sin_azucar", "cantidad": 5, "unidad": "g"}, {"alimento": "copos_de_avena", "cantidad": 30, "unidad": "g"}, {"alimento": "platano", "cantidad": 160, "unidad": "g"}], "sabado": [{"alimento": "leche_sin_lactosa", "cantidad": 250, "unidad": "ml"}, {"alimento": "cacao_sin_azucar", "cantidad": 5, "unidad": "g"}, {"alimento": "pan_de_centeno", "cantidad": 2, "unidad": "tostada"}, {"alimento": "aguacate", "cantidad": 80, "unidad": "g", "notas": "medio aguacate grande / uno pequeño, para untar las 2 tostas"}, {"alimento": "huevo", "cantidad": 1, "unidad": "ud"}], "domingo": [{"alimento": "leche_sin_lactosa", "cantidad": 250, "unidad": "ml"}, {"alimento": "cacao_sin_azucar", "cantidad": 5, "unidad": "g"}, {"alimento": "copos_de_avena", "cantidad": 30, "unidad": "g"}, {"alimento": "pan_de_centeno", "cantidad": 2, "unidad": "tostada"}, {"alimento": "aceite_oliva_virgen", "cantidad": 10, "unidad": "g"}, {"alimento": "atun_lata", "cantidad": 40, "unidad": "g"}, {"alimento": "naranja", "cantidad": 2, "unidad": "ud", "notas": "para zumo"}]}, "pre_mediamañana": {"lunes": [{"alimento": "higos_secos", "cantidad": 1, "unidad": "puñado"}], "martes": [{"tipo": "receta", "receta_id": "sandwich_pavo", "raciones": 1}], "miercoles": [{"alimento": "platano", "cantidad": 160, "unidad": "g"}], "jueves": [{"alimento": "manzana", "cantidad": 200, "unidad": "g"}], "viernes": [{"alimento": "datiles", "cantidad": 1, "unidad": "puñado"}], "sabado": [{"alimento": "platano", "cantidad": 160, "unidad": "g"}], "domingo": [{"alimento": "datiles", "cantidad": 1, "unidad": "puñado"}]}, "mediamañana": {"lunes": [{"tipo": "receta", "receta_id": "medio_sandwich_jamon_serrano", "raciones": 1}], "martes": [{"alimento": "datiles", "cantidad": 1, "unidad": "puñado"}, {"alimento": "cola_de_caballo", "cantidad": 1, "unidad": "infusion"}], "miercoles": [{"alimento": "actimel", "cantidad": 1, "unidad": "ud"}], "jueves": [{"alimento": "nueces", "cantidad": 1, "unidad": "puñado"}, {"alimento": "cola_de_caballo", "cantidad": 1, "unidad": "infusion"}], "viernes": [{"alimento": "actimel", "cantidad": 1, "unidad": "ud"}], "sabado": [{"alimento": "manzana", "cantidad": 200, "unidad": "g"}, {"alimento": "cola_de_caballo", "cantidad": 1, "unidad": "infusion"}], "domingo": [{"alimento": "actimel", "cantidad": 1, "unidad": "ud"}]}, "pre_merienda": {"lunes": [{"alimento": "manzana", "cantidad": 200, "unidad": "g"}, {"alimento": "cola_de_caballo", "cantidad": 1, "unidad": "infusion"}], "martes": [{"alimento": "yogur_natural", "cantidad": 1, "unidad": "ud"}, {"alimento": "semillas_chia", "cantidad": null, "unidad": null, "notas": "para el yogur"}], "miercoles": [{"alimento": "pollo_cocido_lonchas", "cantidad": 2, "unidad": "loncha"}, {"alimento": "cola_de_caballo", "cantidad": 1, "unidad": "infusion"}], "jueves": [{"alimento": "queso_fresco", "cantidad": 20, "unidad": "g"}, {"alimento": "higos_secos", "cantidad": 1, "unidad": "puñado"}], "viernes": [{"alimento": "yogur_natural", "cantidad": 1, "unidad": "ud"}, {"alimento": "semillas_chia", "cantidad": null, "unidad": null, "notas": "para el yogur"}], "sabado": [{"alimento": "queso_fresco", "cantidad": 30, "unidad": "g"}, {"alimento": "higos_secos", "cantidad": 1, "unidad": "puñado"}], "domingo": [{"alimento": "yogur_natural", "cantidad": 1, "unidad": "ud"}, {"alimento": "semillas_chia", "cantidad": null, "unidad": null, "notas": "para el yogur"}]}, "merienda": {"lunes": [{"alimento": "yogur_desnatado", "cantidad": 125, "unidad": "g"}], "martes": [{"alimento": "muesli", "cantidad": 20, "unidad": "g"}, {"alimento": "leche_sin_lactosa", "cantidad": 150, "unidad": "ml"}], "miercoles": [{"alimento": "yogur_desnatado", "cantidad": 125, "unidad": "g"}], "jueves": [{"alimento": "muesli", "cantidad": 20, "unidad": "g"}, {"alimento": "leche_sin_lactosa", "cantidad": 150, "unidad": "ml"}], "viernes": [{"alimento": "manzana", "cantidad": 200, "unidad": "g"}, {"alimento": "cola_de_caballo", "cantidad": 1, "unidad": "infusion"}], "sabado": [{"alimento": "muesli", "cantidad": 20, "unidad": "g"}, {"alimento": "leche_sin_lactosa", "cantidad": 150, "unidad": "ml"}], "domingo": [{"alimento": "pollo_cocido_lonchas", "cantidad": 2, "unidad": "loncha"}, {"alimento": "cola_de_caballo", "cantidad": 1, "unidad": "infusion"}]}}, "revisiones": {"62": {"fecha": "2026-05-08", "almuerzo": {"lunes": [{"tipo": "receta", "receta_id": "ensalada_campera", "raciones": 1}, {"tipo": "simple", "alimento": "pan_integral", "cantidad": 20, "unidad": "g"}, {"tipo": "simple", "alimento": "naranja", "cantidad": 200, "unidad": "g"}], "martes": [{"tipo": "receta", "receta_id": "berenjena_rellena_atun_y_verduras", "raciones": 1}, {"tipo": "simple", "alimento": "pan_integral", "cantidad": 20, "unidad": "g"}, {"tipo": "simple", "alimento": "naranja", "cantidad": 200, "unidad": "g"}], "miercoles": [{"tipo": "simple", "alimento": "gazpacho", "cantidad": 1, "unidad": "taza"}, {"tipo": "simple", "alimento": "pollo_pechuga", "cantidad": 150, "unidad": "g"}, {"tipo": "simple", "alimento": "escarola", "cantidad": 20, "unidad": "g"}, {"tipo": "simple", "alimento": "limon", "cantidad": null, "unidad": null, "notas": "chorrito"}, {"tipo": "simple", "alimento": "pan_integral", "cantidad": 20, "unidad": "g"}, {"tipo": "simple", "alimento": "naranja", "cantidad": 200, "unidad": "g"}], "jueves": [{"tipo": "receta", "receta_id": "ensalada_mixta", "raciones": 1}, {"tipo": "simple", "alimento": "pan_integral", "cantidad": 20, "unidad": "g"}, {"tipo": "simple", "alimento": "fresas", "cantidad": 150, "unidad": "g"}], "viernes": [{"tipo": "receta", "receta_id": "garbanzos_salteados_calabaza_pimiento", "raciones": 1}, {"tipo": "simple", "alimento": "fresas", "cantidad": 150, "unidad": "g"}], "sabado": [{"tipo": "simple", "alimento": "salmon", "cantidad": 150, "unidad": "g"}, {"tipo": "simple", "alimento": "esparrago_blanco", "cantidad": 4, "unidad": "ud"}, {"tipo": "simple", "alimento": "limon", "cantidad": null, "unidad": null, "notas": "chorrito"}, {"tipo": "simple", "alimento": "aceite_oliva_virgen", "cantidad": 5, "unidad": "g"}, {"tipo": "simple", "alimento": "pan_integral", "cantidad": 20, "unidad": "g"}, {"tipo": "simple", "alimento": "fresas", "cantidad": 150, "unidad": "g"}], "domingo": [{"tipo": "receta", "receta_id": "ensalada_templada_lentejas_pavo", "raciones": 1}, {"tipo": "simple", "alimento": "fresas", "cantidad": 150, "unidad": "g"}]}, "cena": {"lunes": [{"tipo": "simple", "alimento": "huevo", "cantidad": 2, "unidad": "ud", "notas": "tortilla francesa"}, {"tipo": "simple", "alimento": "pavo_cocido_lonchas", "cantidad": 2, "unidad": "loncha"}, {"tipo": "simple", "alimento": "aceite_oliva_virgen", "cantidad": 5, "unidad": "g"}, {"tipo": "simple", "alimento": "pan_integral", "cantidad": 20, "unidad": "g"}, {"tipo": "simple", "alimento": "pera", "cantidad": 170, "unidad": "g"}], "martes": [{"tipo": "receta", "receta_id": "ensalada_pollo_endivias_salsa_naranja", "raciones": 1}, {"tipo": "simple", "alimento": "pan_integral", "cantidad": 20, "unidad": "g"}], "miercoles": [{"tipo": "receta", "receta_id": "verduras_salteadas_huevo_plancha", "raciones": 1}, {"tipo": "simple", "alimento": "pan_integral", "cantidad": 20, "unidad": "g"}, {"tipo": "simple", "alimento": "pera", "cantidad": 170, "unidad": "g"}], "jueves": [{"tipo": "simple", "alimento": "pavo_pechuga", "cantidad": 150, "unidad": "g"}, {"tipo": "simple", "alimento": "esparrago_verde", "cantidad": 4, "unidad": "ud", "notas": "puntas"}, {"tipo": "simple", "alimento": "aceite_oliva_virgen", "cantidad": 5, "unidad": "g"}, {"tipo": "simple", "alimento": "pan_integral", "cantidad": 20, "unidad": "g"}, {"tipo": "simple", "alimento": "pera", "cantidad": 170, "unidad": "g"}], "viernes": [{"tipo": "simple", "alimento": "ternera_solomillo", "cantidad": 150, "unidad": "g"}, {"tipo": "simple", "alimento": "patata", "cantidad": 50, "unidad": "g"}, {"tipo": "simple", "alimento": "queso_cabra", "cantidad": 30, "unidad": "g", "notas": "un par de rodajitas, con miel"}, {"tipo": "simple", "alimento": "miel", "cantidad": null, "unidad": null}, {"tipo": "simple", "alimento": "aceite_oliva_virgen", "cantidad": 5, "unidad": "g"}, {"tipo": "simple", "alimento": "pan_integral", "cantidad": 20, "unidad": "g"}, {"tipo": "simple", "alimento": "pina", "cantidad": 200, "unidad": "g"}], "sabado": [{"tipo": "receta", "receta_id": "pollo_plancha_brocoli", "raciones": 1}, {"tipo": "simple", "alimento": "pan_integral", "cantidad": 20, "unidad": "g"}, {"tipo": "simple", "alimento": "pina", "cantidad": 200, "unidad": "g"}], "domingo": [{"tipo": "simple", "alimento": "pollo_pechuga", "cantidad": 150, "unidad": "g"}, {"tipo": "simple", "alimento": "zanahoria", "cantidad": 40, "unidad": "g"}, {"tipo": "simple", "alimento": "escarola", "cantidad": 20, "unidad": "g"}, {"tipo": "simple", "alimento": "salsa_soja", "cantidad": 10, "unidad": "g"}, {"tipo": "simple", "alimento": "aceite_oliva_virgen", "cantidad": 5, "unidad": "g"}, {"tipo": "simple", "alimento": "pan_integral", "cantidad": 20, "unidad": "g"}, {"tipo": "simple", "alimento": "pina", "cantidad": 200, "unidad": "g"}]}}}, "recetas": {"ensalada_campera": {"nombre": "Ensalada Campera", "id_biodieta": 98, "raciones": 1, "ingredientes": [{"alimento": "patata", "cantidad": 150, "unidad": "g"}, {"alimento": "tomate", "cantidad": 50, "unidad": "g"}, {"alimento": "atun_lata", "cantidad": 25, "unidad": "g"}, {"alimento": "aceituna_verde_sin_hueso", "cantidad": 4, "unidad": "ud"}, {"alimento": "huevo", "cantidad": 1, "unidad": "ud", "notas": "1 huevo (~60 g)"}, {"alimento": "cebolla", "cantidad": 40, "unidad": "g"}, {"alimento": "aceite_oliva_virgen", "cantidad": 5, "unidad": "g"}, {"alimento": "sal", "cantidad": 0.5, "unidad": "g"}]}, "berenjena_rellena_atun_y_verduras": {"nombre": "Berenjena rellena de atún y verduras", "id_biodieta": 98321, "raciones": 1, "ingredientes": [{"alimento": "berenjena", "cantidad": 250, "unidad": "g"}, {"alimento": "atun_lata_natural", "cantidad": 100, "unidad": "g", "notas": "al natural escurrido"}, {"alimento": "tomate_triturado", "cantidad": 60, "unidad": "g"}, {"alimento": "cebolla", "cantidad": 40, "unidad": "g"}, {"alimento": "pimiento_verde", "cantidad": 40, "unidad": "g"}, {"alimento": "aceite_oliva_virgen", "cantidad": 5, "unidad": "g"}, {"alimento": "queso_rallado_light", "cantidad": 15, "unidad": "g"}, {"alimento": "sal", "cantidad": 1, "unidad": "g"}, {"alimento": "pimienta_negra", "cantidad": 0.2, "unidad": "g"}]}, "ensalada_mixta": {"nombre": "Ensalada Mixta", "id_biodieta": 98, "raciones": 1, "ingredientes": [{"alimento": "rucula", "cantidad": 40, "unidad": "g"}, {"alimento": "maiz", "cantidad": 30, "unidad": "g"}, {"alimento": "pepino", "cantidad": 40, "unidad": "g"}, {"alimento": "zanahoria", "cantidad": 50, "unidad": "g"}, {"alimento": "queso_en_tacos", "cantidad": 20, "unidad": "g"}, {"alimento": "jamon_en_tacos", "cantidad": 20, "unidad": "g"}, {"alimento": "tomate", "cantidad": 50, "unidad": "g"}, {"alimento": "atun_lata", "cantidad": 25, "unidad": "g"}, {"alimento": "aceituna_verde_sin_hueso", "cantidad": 20, "unidad": "g"}, {"alimento": "aceite_oliva_virgen", "cantidad": 5, "unidad": "g"}, {"alimento": "vinagre", "cantidad": null, "unidad": null, "notas": "chorrito"}, {"alimento": "sal", "cantidad": 0.5, "unidad": "g"}]}, "garbanzos_salteados_calabaza_pimiento": {"nombre": "Garbanzos salteados con calabaza y pimiento verde", "id_biodieta": 596, "raciones": 1, "ingredientes": [{"alimento": "garbanzos_secos", "cantidad": 50, "unidad": "g"}, {"alimento": "calabaza", "cantidad": 150, "unidad": "g"}, {"alimento": "pimiento_verde", "cantidad": 40, "unidad": "g"}, {"alimento": "cebolla", "cantidad": 50, "unidad": "g"}, {"alimento": "ajo", "cantidad": 5, "unidad": "g"}, {"alimento": "aceite_oliva_virgen", "cantidad": 10, "unidad": "g"}, {"alimento": "pimenton_dulce", "cantidad": 1, "unidad": "g"}, {"alimento": "comino", "cantidad": 1, "unidad": "g"}, {"alimento": "sal", "cantidad": 0.5, "unidad": "g"}]}, "ensalada_templada_lentejas_pavo": {"nombre": "Ensalada Templada de Lentejas con Pavo", "id_biodieta": 60199, "raciones": 1, "ingredientes": [{"alimento": "lentejas_crudas", "cantidad": 50, "unidad": "g"}, {"alimento": "pavo_pechuga", "cantidad": 120, "unidad": "g"}, {"alimento": "tomate", "cantidad": 80, "unidad": "g"}, {"alimento": "pepino", "cantidad": 80, "unidad": "g"}, {"alimento": "cebolla_morada", "cantidad": 25, "unidad": "g"}, {"alimento": "canonigos", "cantidad": 40, "unidad": "g"}, {"alimento": "aceite_oliva_virgen", "cantidad": 5, "unidad": "g"}, {"alimento": "vinagre", "cantidad": 5, "unidad": "g"}, {"alimento": "sal", "cantidad": 1, "unidad": "g"}]}, "verduras_salteadas_huevo_plancha": {"nombre": "Verduras salteadas con huevo a la plancha", "id_biodieta": 594, "raciones": 1, "ingredientes": [{"alimento": "calabacin", "cantidad": 120, "unidad": "g"}, {"alimento": "berenjena", "cantidad": 100, "unidad": "g"}, {"alimento": "cebolla", "cantidad": 60, "unidad": "g"}, {"alimento": "pimiento_rojo", "cantidad": 60, "unidad": "g"}, {"alimento": "aceite_oliva_virgen", "cantidad": 10, "unidad": "g"}, {"alimento": "huevo", "cantidad": 1, "unidad": "ud", "notas": "1 huevo (~60 g)"}, {"alimento": "sal", "cantidad": 0.5, "unidad": "g"}]}, "ensalada_pollo_endivias_salsa_naranja": {"nombre": "Ensalada de Pollo y Endivias con Salsa de Naranja", "id_biodieta": 120021, "raciones": 1, "ingredientes": [{"alimento": "pollo_pechuga", "cantidad": 150, "unidad": "g"}, {"alimento": "endivia", "cantidad": 2, "unidad": "ud", "notas": "endivias frescas"}, {"alimento": "rucula", "cantidad": 20, "unidad": "g"}, {"alimento": "canonigos", "cantidad": 20, "unidad": "g"}, {"alimento": "arandanos", "cantidad": 20, "unidad": "g"}, {"alimento": "queso_parmesano", "cantidad": 10, "unidad": "g"}, {"alimento": "aceite_oliva_virgen", "cantidad": 5, "unidad": "g"}, {"alimento": "sal", "cantidad": 0.5, "unidad": "g"}, {"alimento": "naranja", "cantidad": 0.5, "unidad": "ud", "notas": "ralladura y zumo (para salsa)"}, {"alimento": "yogur_natural", "cantidad": 1, "unidad": "cucharada", "notas": "para salsa"}, {"alimento": "pimienta_negra", "cantidad": null, "unidad": null, "notas": "al gusto (para salsa)"}]}, "pollo_plancha_brocoli": {"nombre": "Pechuga de Pollo a la plancha con Brócoli salteado", "id_biodieta": 8779, "raciones": 1, "ingredientes": [{"alimento": "pollo_pechuga", "cantidad": 150, "unidad": "g"}, {"alimento": "brocoli", "cantidad": 100, "unidad": "g"}, {"alimento": "ajo", "cantidad": 3, "unidad": "g"}, {"alimento": "aceite_oliva_virgen", "cantidad": 5, "unidad": "g"}, {"alimento": "sal", "cantidad": 1, "unidad": "g"}, {"alimento": "pimienta_negra", "cantidad": 0.2, "unidad": "g"}, {"alimento": "limon", "cantidad": 10, "unidad": "g", "notas": "zumo"}]}, "sandwich_pavo": {"nombre": "Sandwich de Pavo", "id_biodieta": null, "raciones": 1, "notas": "No tiene ficha en el PDF de Recetas. Cantidades aportadas por Jorge.", "ingredientes": [{"alimento": "pan_bimbo", "cantidad": 2, "unidad": "rebanada"}, {"alimento": "pavo_cocido_lonchas", "cantidad": 4, "unidad": "loncha"}]}, "medio_sandwich_jamon_serrano": {"nombre": "Medio Sandwich de Jamón Serrano", "id_biodieta": null, "raciones": 1, "notas": "No tiene ficha en el PDF de Recetas. Cantidades estimadas (jamón al gusto, ~30 g).", "ingredientes": [{"alimento": "pan_bimbo", "cantidad": 1, "unidad": "rebanada"}, {"alimento": "jamon_serrano", "cantidad": 30, "unidad": "g"}]}}, "alimentos": {"aceite_oliva_virgen": {"nombre": "Aceite de oliva virgen", "seccion": "aceites_y_vinagres", "unidad_compra": "litro"}, "aceituna_verde_sin_hueso": {"nombre": "Aceituna verde sin hueso", "seccion": "despensa", "unidad_compra": "bote"}, "actimel": {"nombre": "Actimel", "seccion": "lacteos", "unidad_compra": "pack"}, "aguacate": {"nombre": "Aguacate", "seccion": "fruteria", "unidad_compra": "ud"}, "ajo": {"nombre": "Ajo", "seccion": "fruteria", "unidad_compra": "cabeza"}, "arandanos": {"nombre": "Arándanos", "seccion": "fruteria", "unidad_compra": "tarrina"}, "atun_lata": {"nombre": "Atún en lata (aceite)", "seccion": "despensa", "unidad_compra": "lata"}, "atun_lata_natural": {"nombre": "Atún en lata al natural", "seccion": "despensa", "unidad_compra": "lata"}, "berenjena": {"nombre": "Berenjena", "seccion": "fruteria", "unidad_compra": "ud"}, "brocoli": {"nombre": "Brócoli", "seccion": "fruteria", "unidad_compra": "kg"}, "cacao_sin_azucar": {"nombre": "Cacao sin azúcar", "seccion": "bebidas", "unidad_compra": "bote"}, "calabacin": {"nombre": "Calabacín", "seccion": "fruteria", "unidad_compra": "kg"}, "calabaza": {"nombre": "Calabaza", "seccion": "fruteria", "unidad_compra": "kg"}, "canonigos": {"nombre": "Canónigos", "seccion": "fruteria", "unidad_compra": "bolsa"}, "cebolla": {"nombre": "Cebolla", "seccion": "fruteria", "unidad_compra": "kg"}, "cebolla_morada": {"nombre": "Cebolla morada", "seccion": "fruteria", "unidad_compra": "kg"}, "cola_de_caballo": {"nombre": "Cola de caballo (infusión)", "seccion": "bebidas", "unidad_compra": "caja"}, "comino": {"nombre": "Comino", "seccion": "despensa", "unidad_compra": "bote"}, "copos_de_avena": {"nombre": "Copos de avena", "seccion": "despensa", "unidad_compra": "paquete"}, "datiles": {"nombre": "Dátiles", "seccion": "despensa", "unidad_compra": "paquete"}, "endivia": {"nombre": "Endivia", "seccion": "fruteria", "unidad_compra": "ud"}, "escarola": {"nombre": "Escarola", "seccion": "fruteria", "unidad_compra": "ud"}, "esparrago_blanco": {"nombre": "Espárrago blanco", "seccion": "despensa", "unidad_compra": "bote"}, "esparrago_verde": {"nombre": "Espárrago verde", "seccion": "fruteria", "unidad_compra": "manojo"}, "fresas": {"nombre": "Fresas", "seccion": "fruteria", "unidad_compra": "tarrina"}, "garbanzos_secos": {"nombre": "Garbanzos secos", "seccion": "despensa", "unidad_compra": "paquete"}, "gazpacho": {"nombre": "Gazpacho", "seccion": "despensa", "unidad_compra": "brik"}, "higos_secos": {"nombre": "Higos secos", "seccion": "despensa", "unidad_compra": "paquete"}, "huevo": {"nombre": "Huevo", "seccion": "hueveria", "unidad_compra": "docena"}, "jamon_en_tacos": {"nombre": "Jamón en tacos", "seccion": "charcuteria", "unidad_compra": "paquete"}, "jamon_serrano": {"nombre": "Jamón serrano (lonchas)", "seccion": "charcuteria", "unidad_compra": "paquete"}, "leche_sin_lactosa": {"nombre": "Leche sin lactosa", "seccion": "lacteos", "unidad_compra": "litro"}, "lentejas_crudas": {"nombre": "Lentejas crudas", "seccion": "despensa", "unidad_compra": "paquete"}, "limon": {"nombre": "Limón", "seccion": "fruteria", "unidad_compra": "kg"}, "maiz": {"nombre": "Maíz", "seccion": "despensa", "unidad_compra": "lata"}, "manzana": {"nombre": "Manzana", "seccion": "fruteria", "unidad_compra": "kg"}, "miel": {"nombre": "Miel", "seccion": "despensa", "unidad_compra": "bote"}, "muesli": {"nombre": "Muesli", "seccion": "despensa", "unidad_compra": "paquete"}, "naranja": {"nombre": "Naranja", "seccion": "fruteria", "unidad_compra": "kg"}, "nueces": {"nombre": "Nueces", "seccion": "despensa", "unidad_compra": "paquete"}, "pan_bimbo": {"nombre": "Pan Bimbo (molde)", "seccion": "panaderia", "unidad_compra": "paquete"}, "pan_de_centeno": {"nombre": "Pan de centeno tostado", "seccion": "panaderia", "unidad_compra": "paquete"}, "pan_integral": {"nombre": "Pan integral", "seccion": "panaderia", "unidad_compra": "barra"}, "patata": {"nombre": "Patata", "seccion": "fruteria", "unidad_compra": "kg"}, "pavo_cocido_lonchas": {"nombre": "Pavo cocido en lonchas", "seccion": "charcuteria", "unidad_compra": "paquete"}, "pavo_pechuga": {"nombre": "Pechuga de pavo", "seccion": "carniceria", "unidad_compra": "kg"}, "pepino": {"nombre": "Pepino", "seccion": "fruteria", "unidad_compra": "ud"}, "pera": {"nombre": "Pera", "seccion": "fruteria", "unidad_compra": "kg"}, "pimenton_dulce": {"nombre": "Pimentón dulce", "seccion": "despensa", "unidad_compra": "bote"}, "pimienta_negra": {"nombre": "Pimienta negra", "seccion": "despensa", "unidad_compra": "bote"}, "pimiento_rojo": {"nombre": "Pimiento rojo", "seccion": "fruteria", "unidad_compra": "kg"}, "pimiento_verde": {"nombre": "Pimiento verde", "seccion": "fruteria", "unidad_compra": "kg"}, "pina": {"nombre": "Piña", "seccion": "fruteria", "unidad_compra": "ud"}, "platano": {"nombre": "Plátano", "seccion": "fruteria", "unidad_compra": "kg"}, "pollo_cocido_lonchas": {"nombre": "Pollo cocido en lonchas", "seccion": "charcuteria", "unidad_compra": "paquete"}, "pollo_pechuga": {"nombre": "Pechuga de pollo", "seccion": "carniceria", "unidad_compra": "kg"}, "queso_cabra": {"nombre": "Queso de cabra", "seccion": "lacteos", "unidad_compra": "ud"}, "queso_en_tacos": {"nombre": "Queso en tacos", "seccion": "lacteos", "unidad_compra": "paquete"}, "queso_fresco": {"nombre": "Queso fresco", "seccion": "lacteos", "unidad_compra": "ud"}, "queso_parmesano": {"nombre": "Queso parmesano", "seccion": "lacteos", "unidad_compra": "cuña"}, "queso_rallado_light": {"nombre": "Queso rallado light", "seccion": "lacteos", "unidad_compra": "paquete"}, "rucula": {"nombre": "Rúcula", "seccion": "fruteria", "unidad_compra": "bolsa"}, "sal": {"nombre": "Sal común", "seccion": "despensa", "unidad_compra": "paquete"}, "salmon": {"nombre": "Salmón", "seccion": "pescaderia", "unidad_compra": "kg"}, "salsa_soja": {"nombre": "Salsa de soja", "seccion": "despensa", "unidad_compra": "bote"}, "semillas_chia": {"nombre": "Semillas de chía", "seccion": "despensa", "unidad_compra": "paquete"}, "ternera_solomillo": {"nombre": "Solomillo de ternera", "seccion": "carniceria", "unidad_compra": "kg"}, "tomate": {"nombre": "Tomate", "seccion": "fruteria", "unidad_compra": "kg"}, "tomate_triturado": {"nombre": "Tomate triturado", "seccion": "despensa", "unidad_compra": "lata"}, "vinagre": {"nombre": "Vinagre", "seccion": "aceites_y_vinagres", "unidad_compra": "litro"}, "yogur_desnatado": {"nombre": "Yogur desnatado", "seccion": "lacteos", "unidad_compra": "pack"}, "yogur_natural": {"nombre": "Yogur natural", "seccion": "lacteos", "unidad_compra": "pack"}, "zanahoria": {"nombre": "Zanahoria", "seccion": "fruteria", "unidad_compra": "kg"}}, "secciones_super": {"fruteria": {"nombre": "Frutería", "orden": 1}, "carniceria": {"nombre": "Carnicería", "orden": 2}, "pescaderia": {"nombre": "Pescadería", "orden": 3}, "charcuteria": {"nombre": "Charcutería (embutidos y quesos en loncha)", "orden": 4}, "panaderia": {"nombre": "Panadería", "orden": 5}, "lacteos": {"nombre": "Lácteos", "orden": 6}, "hueveria": {"nombre": "Huevería", "orden": 7}, "despensa": {"nombre": "Despensa (legumbres, cereales, frutos secos, conservas, especias)", "orden": 8}, "aceites_y_vinagres": {"nombre": "Aceites y vinagres", "orden": 9}, "bebidas": {"nombre": "Bebidas (zumos, cacao, infusiones)", "orden": 10}}};
+
+const DIAS = [
+  {id: "lunes", nom: "Lun"}, {id: "martes", nom: "Mar"}, {id: "miercoles", nom: "Mié"},
+  {id: "jueves", nom: "Jue"}, {id: "viernes", nom: "Vie"}, {id: "sabado", nom: "Sáb"}, {id: "domingo", nom: "Dom"}
+];
+const TOMAS = [
+  {id: "desayuno", nom: "Desayuno"},
+  {id: "pre_mediamañana", nom: "Pre-mediamañana"},
+  {id: "mediamañana", nom: "Mediamañana"},
+  {id: "almuerzo", nom: "Almuerzo"},
+  {id: "pre_merienda", nom: "Pre-merienda"},
+  {id: "merienda", nom: "Merienda"},
+  {id: "cena", nom: "Cena"}
+];
+const EMOJIS_SECCION = {
+  fruteria: "🥦", carniceria: "🥩", pescaderia: "🐟",
+  charcuteria: "🍖", panaderia: "🍞", lacteos: "🥛",
+  hueveria: "🥚", despensa: "🥫", aceites_y_vinagres: "🫒", bebidas: "🧃"
+};
+
+const REV = String(DB.meta.revision_actual);
+
+// === ESTADO ===
+const state = (() => {
+  const def = {
+    dias: DIAS.map(d => d.id),
+    tomas: TOMAS.map(t => t.id),
+    agrupar: true,
+    bloqueado: false,
+    comprados: []
+  };
+  try {
+    const raw = localStorage.getItem("biodieta_compra_state_v1");
+    if (raw) return { ...def, ...JSON.parse(raw) };
+  } catch(e) {}
+  return def;
+})();
+function guardarEstado() {
+  try { localStorage.setItem("biodieta_compra_state_v1", JSON.stringify(state)); } catch(e) {}
+}
+
+// === DATOS: expandir items ===
+function expandirItem(it) {
+  if (!it || typeof it !== "object") return [];
+  if (it.tipo === "receta") {
+    const r = DB.recetas[it.receta_id];
+    if (!r) return [];
+    const rac = it.raciones || 1;
+    return r.ingredientes.map(g => ({
+      alimento: g.alimento,
+      cantidad: (g.cantidad == null ? null : g.cantidad * rac),
+      unidad: g.unidad,
+      notas: g.notas
+    }));
+  }
+  if (it.alimento) {
+    return [{ alimento: it.alimento, cantidad: it.cantidad, unidad: it.unidad, notas: it.notas }];
+  }
+  return [];
+}
+function itemsDelDia(dia, tomasSet) {
+  const out = [];
+  for (const t of TOMAS) {
+    if (!tomasSet.has(t.id)) continue;
+    const arr = (DB.tomas_fijas[t.id] && DB.tomas_fijas[t.id][dia]) || (DB.revisiones[REV][t.id] && DB.revisiones[REV][t.id][dia]) || [];
+    out.push(...arr);
+  }
+  return out;
+}
+
+function calcularLista() {
+  const diasSet = new Set(state.dias);
+  const tomasSet = new Set(state.tomas);
+  // alimento|unidad -> { total, sinCant, notas:Set }
+  const agreg = new Map();
+  for (const d of DIAS) {
+    if (!diasSet.has(d.id)) continue;
+    for (const it of itemsDelDia(d.id, tomasSet)) {
+      for (const e of expandirItem(it)) {
+        const key = e.alimento + "|" + (e.unidad || "");
+        let entry = agreg.get(key);
+        if (!entry) {
+          entry = { alimento: e.alimento, unidad: e.unidad, total: 0, sinCant: 0, notas: new Set() };
+          agreg.set(key, entry);
+        }
+        if (e.cantidad == null) entry.sinCant++;
+        else entry.total += e.cantidad;
+        if (e.notas) entry.notas.add(e.notas);
+      }
+    }
+  }
+  return Array.from(agreg.values());
+}
+
+function fmtCantidad(entry) {
+  const partes = [];
+  if (entry.total > 0) {
+    const n = Number(entry.total.toFixed(2));
+    partes.push(`${n} ${entry.unidad || ""}`.trim());
+  }
+  if (entry.sinCant > 0) partes.push(entry.sinCant === 1 ? "al gusto" : `${entry.sinCant}× al gusto`);
+  return partes.join(" + ") || "—";
+}
+
+// === RENDER ===
+function renderChips() {
+  const elDias = document.getElementById("chips-dias");
+  elDias.innerHTML = "";
+  const setDias = new Set(state.dias);
+  for (const d of DIAS) {
+    const b = document.createElement("button");
+    b.className = "chip" + (setDias.has(d.id) ? " activo" : "");
+    b.textContent = d.nom;
+    b.onclick = () => {
+      if (state.bloqueado) return;
+      if (setDias.has(d.id)) state.dias = state.dias.filter(x => x !== d.id);
+      else state.dias = [...state.dias, d.id];
+      guardarEstado(); render();
+    };
+    elDias.appendChild(b);
+  }
+  const elTomas = document.getElementById("chips-tomas");
+  elTomas.innerHTML = "";
+  const setTomas = new Set(state.tomas);
+  for (const t of TOMAS) {
+    const b = document.createElement("button");
+    b.className = "chip" + (setTomas.has(t.id) ? " activo" : "");
+    b.textContent = t.nom;
+    b.onclick = () => {
+      if (state.bloqueado) return;
+      if (setTomas.has(t.id)) state.tomas = state.tomas.filter(x => x !== t.id);
+      else state.tomas = [...state.tomas, t.id];
+      guardarEstado(); render();
+    };
+    elTomas.appendChild(b);
+  }
+}
+
+function renderLista() {
+  const cont = document.getElementById("lista");
+  cont.innerHTML = "";
+  const items = calcularLista();
+  if (!items.length) {
+    cont.innerHTML = '<div class="vacio"><div class="emoji">🥗</div><div>No hay productos con los filtros seleccionados</div></div>';
+    actualizarResumen(0, 0);
+    return;
+  }
+
+  const compradosSet = new Set(state.comprados);
+  const totalProductos = items.length;
+  let comprados = 0;
+
+  if (state.agrupar) {
+    const porSec = new Map();
+    for (const it of items) {
+      const sec = DB.alimentos[it.alimento].seccion;
+      if (!porSec.has(sec)) porSec.set(sec, []);
+      porSec.get(sec).push(it);
+    }
+    const secOrden = Array.from(porSec.keys()).sort((a, b) => DB.secciones_super[a].orden - DB.secciones_super[b].orden);
+    for (const secId of secOrden) {
+      const its = porSec.get(secId).sort((a, b) => DB.alimentos[a.alimento].nombre.localeCompare(DB.alimentos[b.alimento].nombre, "es"));
+      const secEl = document.createElement("div");
+      secEl.className = "seccion";
+      const tit = document.createElement("div");
+      tit.className = "seccion-titulo";
+      tit.innerHTML = `<span class="emoji">${EMOJIS_SECCION[secId] || "🛒"}</span><span>${DB.secciones_super[secId].nombre}</span><span class="contador" data-sec="${secId}"></span>`;
+      secEl.appendChild(tit);
+      const ul = document.createElement("ul"); ul.className = "items";
+      let comprSec = 0;
+      for (const it of its) {
+        const li = renderItem(it, compradosSet);
+        if (compradosSet.has(itemKey(it))) { comprados++; comprSec++; }
+        ul.appendChild(li);
+      }
+      tit.querySelector('.contador').textContent = `${comprSec} / ${its.length}`;
+      secEl.appendChild(ul);
+      cont.appendChild(secEl);
+    }
+  } else {
+    items.sort((a, b) => DB.alimentos[a.alimento].nombre.localeCompare(DB.alimentos[b.alimento].nombre, "es"));
+    const sec = document.createElement("div"); sec.className = "seccion";
+    const ul = document.createElement("ul"); ul.className = "items";
+    for (const it of items) {
+      const li = renderItem(it, compradosSet);
+      if (compradosSet.has(itemKey(it))) comprados++;
+      ul.appendChild(li);
+    }
+    sec.appendChild(ul); cont.appendChild(sec);
+  }
+  actualizarResumen(totalProductos, comprados);
+}
+
+function itemKey(it) { return it.alimento + "|" + (it.unidad || ""); }
+
+function renderItem(it, compradosSet) {
+  const li = document.createElement("li");
+  const key = itemKey(it);
+  const comprado = compradosSet.has(key);
+  if (comprado) li.classList.add("comprado");
+  const info = document.createElement("div"); info.className = "item-info";
+  const nom = document.createElement("div"); nom.className = "item-nombre";
+  nom.textContent = DB.alimentos[it.alimento].nombre;
+  const cant = document.createElement("div"); cant.className = "item-cantidad";
+  cant.textContent = fmtCantidad(it);
+  if (it.notas && it.notas.size) cant.textContent += " · " + Array.from(it.notas).join("; ");
+  info.appendChild(nom); info.appendChild(cant);
+  const btn = document.createElement("button");
+  btn.className = "btn-cart" + (comprado ? " marcado" : "");
+  btn.innerHTML = comprado ? "✓" : "🛒";
+  btn.title = comprado ? "Marcar como pendiente" : "Marcar como comprado";
+  btn.onclick = () => {
+    if (compradosSet.has(key)) state.comprados = state.comprados.filter(k => k !== key);
+    else state.comprados = [...state.comprados, key];
+    guardarEstado(); render();
+  };
+  li.appendChild(info); li.appendChild(btn);
+  return li;
+}
+
+function actualizarResumen(total, comprados) {
+  document.getElementById("total").textContent = total;
+  document.getElementById("comprados").textContent = comprados;
+  document.getElementById("pendientes").textContent = total - comprados;
+  const pct = total > 0 ? (comprados / total * 100) : 0;
+  document.getElementById("barra").style.width = pct + "%";
+}
+
+function render() {
+  document.getElementById("filtros").toggleAttribute("disabled", state.bloqueado);
+  const lock = document.getElementById("lock");
+  lock.textContent = state.bloqueado ? "🔒" : "🔓";
+  lock.classList.toggle("bloqueado", state.bloqueado);
+  lock.title = state.bloqueado ? "Desbloquear filtros" : "Bloquear filtros";
+  document.getElementById("agrupar").checked = state.agrupar;
+  renderChips();
+  renderLista();
+}
+
+// === EVENTOS ===
+document.getElementById("agrupar").onchange = (e) => {
+  if (state.bloqueado) { e.target.checked = state.agrupar; return; }
+  state.agrupar = e.target.checked; guardarEstado(); render();
+};
+document.getElementById("lock").onclick = () => {
+  state.bloqueado = !state.bloqueado; guardarEstado(); render();
+};
+document.getElementById("reset").onclick = () => {
+  if (state.comprados.length === 0) return;
+  if (confirm("¿Limpiar todas las marcas de comprado?")) {
+    state.comprados = []; guardarEstado(); render();
+  }
+};
+document.querySelectorAll("[data-action]").forEach(b => {
+  b.onclick = () => {
+    if (state.bloqueado) return;
+    const a = b.dataset.action;
+    if (a === "all-dias") state.dias = DIAS.map(d => d.id);
+    else if (a === "none-dias") state.dias = [];
+    else if (a === "all-tomas") state.tomas = TOMAS.map(t => t.id);
+    else if (a === "none-tomas") state.tomas = [];
+    guardarEstado(); render();
+  };
+});
+
+document.getElementById("meta-info").textContent = "Rev. " + DB.meta.revision_actual + " · " + DB.meta.fecha_revision;
+render();
+</script>
+</body>
+</html>
